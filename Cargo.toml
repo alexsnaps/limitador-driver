@@ -1,0 +1,18 @@
+[package]
+name = "limitador-driver"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = { version = "4.5.1", features = ["derive"] }
+parse_duration = "2.1.1"
+tonic = "0.11"
+prost = "0.12"
+prost-types = "0.12"
+tokio = { version = "1.0", features = ["macros", "rt-multi-thread"] }
+hdrhistogram = "7.5.4"
+
+[build-dependencies]
+tonic-build = "0.11"
