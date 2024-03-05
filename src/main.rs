@@ -101,12 +101,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             print_h(&histogram, "Overall");
 
             println!();
-            for v in break_once(histogram.iter_linear(500), |v| v.quantile() > 0.99) {
+            for v in break_once(histogram.iter_linear(histogram.value_at_quantile(0.99) / 10), |v| v.quantile() > 0.999) {
                 println!(
-                    "{:4.1}ms | {:40} | {:4.1}th %-ile",
+                    "{:4.2}ms | {:80} | {:4.1}th %-ile",
                     (v.value_iterated_to() + 1) as f64 / 1000.0,
                     "*".repeat(
-                        (v.count_since_last_iteration() as f64 * 40.0 / histogram.len() as f64).ceil() as usize
+                        (v.count_since_last_iteration() as f64 * 80.0 / histogram.len() as f64).ceil() as usize
                     ),
                     v.percentile()
                 );
