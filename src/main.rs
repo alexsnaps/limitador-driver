@@ -1,15 +1,13 @@
+use crate::proto::envoy::service::ratelimit::v3::rate_limit_response::Code;
+use clap::Parser;
+use hdrhistogram::Histogram;
+use proto::envoy::service::ratelimit::v3::rate_limit_service_client::RateLimitServiceClient;
+use proto::envoy::service::ratelimit::v3::{RateLimitRequest, RateLimitResponse};
 use std::fmt::{Display, Formatter};
 use std::mem::transmute;
 use std::time::Duration;
-use clap::Parser;
-use hdrhistogram::Histogram;
 use tokio::time::Instant;
 use tonic::Response;
-use proto::envoy::service::ratelimit::v3::rate_limit_service_client::RateLimitServiceClient;
-use proto::envoy::service::ratelimit::v3::{
-    RateLimitRequest, RateLimitResponse,
-};
-use crate::proto::envoy::service::ratelimit::v3::rate_limit_response::Code;
 
 mod proto;
 
@@ -32,7 +30,12 @@ impl TryFrom<CliConfiguration> for Configuration {
         let duration = &cli.duration.unwrap_or("10m".to_string());
         let duration = match parse_duration::parse(duration) {
             Ok(dur) => dur,
-            Err(err) => return Err(format!("Couldn't parse duration from \"{}\"\n\t{}", duration, err)),
+            Err(err) => {
+                return Err(format!(
+                    "Couldn't parse duration from \"{}\"\n\t{}",
+                    duration, err
+                ))
+            }
         };
 
         Ok(Self {
@@ -44,7 +47,12 @@ impl TryFrom<CliConfiguration> for Configuration {
 
 impl Display for Configuration {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Hitting Limitador at {} for a total duration of {} minutes", self.url, self.duration.as_secs_f64() / 60.0)
+        write!(
+            f,
+            "Hitting Limitador at {} for a total duration of {} minutes",
+            self.url,
+            self.duration.as_secs_f64() / 60.0
+        )
     }
 }
 
@@ -61,7 +69,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let mut ok_histogram: Histogram<u64> = Histogram::new_with_max(timeout, 2).unwrap();
             let mut over_histogram: Histogram<u64> = Histogram::new_with_max(timeout, 2).unwrap();
-            let mut unknown_histogram: Histogram<u64> = Histogram::new_with_max(timeout, 2).unwrap();
+            let mut unknown_histogram: Histogram<u64> =
+                Histogram::new_with_max(timeout, 2).unwrap();
             let mut period_histogram: Histogram<u64> = Histogram::new_with_max(timeout, 2).unwrap();
             let mut histogram: Histogram<u64> = Histogram::new_with_max(timeout, 2).unwrap();
 
@@ -75,7 +84,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 });
 
                 let round_trip = Instant::now();
-                let response: Response<RateLimitResponse> = client.should_rate_limit(request).await?;
+                let response: Response<RateLimitResponse> =
+                    client.should_rate_limit(request).await?;
                 let code: Code = unsafe { transmute(response.into_inner().overall_code) };
                 let elapsed = round_trip.elapsed();
                 let h = match code {
@@ -85,8 +95,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 };
                 let elapsed = elapsed.as_micros() as u64;
                 h.record(elapsed).expect("Value should be between bounds");
-                period_histogram.record(elapsed).expect("Value should be between bounds");
-                histogram.record(elapsed).expect("Value should be between bounds");
+                period_histogram
+                    .record(elapsed)
+                    .expect("Value should be between bounds");
+                histogram
+                    .record(elapsed)
+                    .expect("Value should be between bounds");
 
                 if period.elapsed() > Duration::from_secs(1) {
                     print_h(&period_histogram, "Current");
@@ -101,12 +115,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             print_h(&histogram, "Overall");
 
             println!();
-            for v in break_once(histogram.iter_linear(histogram.value_at_quantile(0.99) / 10), |v| v.quantile() > 0.999) {
+            for v in break_once(
+                histogram.iter_linear(histogram.value_at_quantile(0.99) / 10),
+                |v| v.quantile() > 0.999,
+            ) {
                 println!(
                     "{:4.2}ms | {:80} | {:4.1}th %-ile",
                     (v.value_iterated_to() + 1) as f64 / 1000.0,
                     "*".repeat(
-                        (v.count_since_last_iteration() as f64 * 80.0 / histogram.len() as f64).ceil() as usize
+                        (v.count_since_last_iteration() as f64 * 80.0 / histogram.len() as f64)
+                            .ceil() as usize
                     ),
                     v.percentile()
                 );
@@ -134,10 +152,10 @@ fn print_h(histogram: &Histogram<u64>, prefix: &str) {
     );
 }
 
-fn break_once<I, F>(it: I, mut f: F) -> impl Iterator<Item=I::Item>
-    where
-        I: IntoIterator,
-        F: FnMut(&I::Item) -> bool,
+fn break_once<I, F>(it: I, mut f: F) -> impl Iterator<Item = I::Item>
+where
+    I: IntoIterator,
+    F: FnMut(&I::Item) -> bool,
 {
     let mut got_true = false;
     it.into_iter().take_while(move |i| {
