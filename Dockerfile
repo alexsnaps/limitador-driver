@@ -27,4 +27,4 @@ COPY start.sh /bench/start.sh
 RUN chmod +x /bench/start.sh
 
 # Run the script
-CMD ["/bench/start.sh"]
+ENTRYPOINT ["/bin/bash", "-c", "/bench/start.sh \"$@\"", "--"]
