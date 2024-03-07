@@ -1,0 +1,7 @@
+---
+-
+  namespace: test_namespace
+  max_value: 100000
+  seconds: 5
+  conditions:
+  variables:
