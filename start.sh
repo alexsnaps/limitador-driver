@@ -33,6 +33,8 @@ echo "Executing limitador: $ limitador-server /bench/limits.yaml $storage $stora
 # Start limitador in the background
 if [[ -z "$storage_url" ]]; then
     /bench/limitador-server /bench/limits.yaml "$storage" &
+elif [ "$storage" == "redis_cached" ]; then
+    /bench/limitador-server /bench/limits.yaml "$storage" "$storage_url" --ratio 1 &
 else
     /bench/limitador-server /bench/limits.yaml "$storage" "$storage_url" &
 fi

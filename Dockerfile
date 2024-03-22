@@ -20,7 +20,7 @@ COPY --from=builder /usr/src/limitador-driver/target/release/limitador-driver /b
 COPY limits.yaml /bench
 
 # Copy the limitador service into the container
-COPY --from=quay.io/kuadrant/limitador:latest /home/limitador/bin/limitador-server /bench/limitador-server
+COPY --from=quay.io/kuadrant/limitador:write-behind-lock /home/limitador/bin/limitador-server /bench/limitador-server
 
 # Copy the script to start both services
 COPY start.sh /bench/start.sh
