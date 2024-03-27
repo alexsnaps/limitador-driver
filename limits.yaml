@@ -1,0 +1,16 @@
+---
+- namespace: test_namespace
+  max_value: 100000
+  seconds: 5
+  conditions:
+  variables:
+- namespace: test_namespace
+  max_value: 100000
+  seconds: 4
+  conditions:
+  variables:
+- namespace: test_namespace
+  max_value: 100000
+  seconds: 3
+  conditions:
+  variables:
